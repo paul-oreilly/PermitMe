@@ -1,0 +1,12 @@
+main: com.oreilly.permitme.PermitMe
+author: oreillynz
+name: PermitMe
+version: 0.1
+softdepend: [Vault]
+
+permissions:
+    PermitMe.exempt:
+        discription: Excempts a player from needing permits
+        default: op
+
+

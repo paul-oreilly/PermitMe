@@ -16,10 +16,10 @@ import org.bukkit.inventory.ItemStack;
 import com.oreilly.permitme.permit.PermitManager;
 
 
-// TODO: Block interaction limits
-// TODO: Enchanting limits
-// TODO: Golem limits
-// TODO: Crafting limits
+//TODO Support for item crafting
+//TODO Support for item enchanting
+//TODO Support for golem construction
+
 
 
 public class EventListener implements Listener {
@@ -44,7 +44,7 @@ public class EventListener implements Listener {
 		// get a list of what permits we may need to check for
 		PermitManager pm = manager.permitManager;
 		Set< String > permitsToCheck = pm.getCombinedPermits( id, data, 
-				pm.breakingIndex, pm.breakingComplexIndex );
+				pm.blockBreakingIndex, pm.blockBreakingComplexIndex );
 		if ( permitsToCheck != null ) {
 			// see if the player has any of the listed permits
 			if ( manager.playerManager.hasPermit( player, permitsToCheck )) return;
@@ -69,7 +69,7 @@ public class EventListener implements Listener {
 		// get a list of what permits we may need to check for
 		PermitManager pm = manager.permitManager;
 		Set< String > permitsToCheck = pm.getCombinedPermits( id, data, 
-					pm.placingIndex, pm.placingComplexIndex );
+					pm.blockPlacingIndex, pm.blockPlacingComplexIndex );
 		if ( permitsToCheck != null ) {
 			// see if the player has any of the listed permits
 			if ( manager.playerManager.hasPermit( player, permitsToCheck )) return;
@@ -96,12 +96,25 @@ public class EventListener implements Listener {
 		// check item use restrictions
 		PermitManager pm = manager.permitManager;
 		Set< String > permitsToCheck = pm.getCombinedPermits(id, data,
-				pm.usingIndex, pm.usingComplexIndex );
+				pm.itemUseIndex, pm.itemUseComplexIndex );
 		if ( permitsToCheck != null ) {
-			if ( manager.playerManager.hasPermit(player, permitsToCheck)) return;
-			// failed - block the item use
-			event.setCancelled(true);
-			player.sendMessage("You don't have the correct permit to use that");
+			if ( manager.playerManager.hasPermit(player, permitsToCheck) == false ) {
+				// failed - block the item use
+				event.setCancelled(true);
+				player.sendMessage("You don't have the correct permit to use that");
+				return;
+			}
+		}
+		// check block use restrictions
+		permitsToCheck = pm.getCombinedPermits( block.getTypeId(), block.getData(),
+				pm.blockUseIndex, pm.blockUseComplexIndex );
+		if ( permitsToCheck != null ) {
+			if ( manager.playerManager.hasPermit( player, permitsToCheck ) == false ) {
+				// failed - can't click while pointing at this block
+				event.setCancelled(true);
+				player.sendMessage("You don't have the correct permit to activate that block");
+				return;				
+			}
 		}
 	}
 	

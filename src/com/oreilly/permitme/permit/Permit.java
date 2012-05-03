@@ -27,6 +27,8 @@ public class Permit {
 	public BlockDataRecord blockBreakMeta = new BlockDataRecord();  
 	public LinkedList<Integer> blockPlace = new LinkedList<Integer>();
 	public BlockDataRecord blockPlaceMeta = new BlockDataRecord();
+	public LinkedList<Integer> blockUse = new LinkedList<Integer>();
+	public BlockDataRecord blockUseMeta = new BlockDataRecord();	
 	public LinkedList<Integer> itemUse = new LinkedList<Integer>();
 	public BlockDataRecord itemUseMeta = new BlockDataRecord();
 	public LinkedList<Integer> crafting = new LinkedList<Integer>();

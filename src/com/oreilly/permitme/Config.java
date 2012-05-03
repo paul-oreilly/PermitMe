@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -31,7 +30,6 @@ import com.oreilly.permitme.player.PermitPlayer;
 
 /*
  * TODO Shop system - data, config, load, save
- * TODO Move strings that identify config items into constant classes
  * TODO (Low priority!)  consider a file to map "Name" to "ID" to make config files easier to read
  */
 
@@ -52,7 +50,7 @@ public class Config {
 		
 		FileConfiguration config = loadYamlFile( conf );
 		
-		enabled = config.getBoolean("Enabled", true );
+		enabled = config.getBoolean( ConfigConstant.enabled, true );
 		// TODO: Don't process files if not enabled
 		log.info("[PermitMe] Loading Permits...");
 		
@@ -128,37 +126,39 @@ public class Config {
 		
 		FileConfiguration config = loadYamlFile( file );
 		
-		String permitName = config.getString("Name", "" );
+		String permitName = config.getString( PermitConstant.name, "" );
 		if ( permitName == "" ) return null;
 		
 		Permit permit = new Permit( permitName, file.getName());
-		permit.virtual = config.getBoolean("Virtual", false );
-		permit.basePrice = config.getDouble("Pricing.BasePrice", 10000);
-		permit.pricingMethod = config.getString("Pricing.Method", "Simple");
+		permit.virtual = config.getBoolean( PermitConstant.virtual, false );
+		permit.basePrice = config.getDouble( PermitConstant.basePrice, 10000);
+		permit.pricingMethod = config.getString( PermitConstant.pricingMethod, "Simple");
 		
-		ConfigurationSection permissions = config.getConfigurationSection("Permissions");
-
-		for ( String item : permissions.getStringList("BreakBlocks"))
-			unpackConfigItem( permitName + ":BreakBlocks", item, 
+		for ( String item : config.getStringList( PermitConstant.permissionBlockBreak ))
+			unpackConfigItem( permitName + ":" + PermitConstant.permissionBlockBreak, item, 
 				permit.blockBreak, permit.blockBreakMeta );
 		
-		for ( String item : permissions.getStringList("PlaceBlocks"))
-			unpackConfigItem( permitName + ":PlaceBlocks", item, 
+		for ( String item : config.getStringList( PermitConstant.permissionBlockPlace ))
+			unpackConfigItem( permitName + ":" + PermitConstant.permissionBlockPlace, item, 
 				permit.blockPlace, permit.blockPlaceMeta );
+				
+		for ( String item : config.getStringList( PermitConstant.permissionBlockUse ))
+			unpackConfigItem( permitName + ":" + PermitConstant.permissionBlockUse, item, 
+				permit.blockUse, permit.blockUseMeta );		
 
-		for ( String item : permissions.getStringList("UseItems"))
-			unpackConfigItem( permitName + ":UseItems", item, 
+		for ( String item : config.getStringList( PermitConstant.permissionItemUse ))
+			unpackConfigItem( permitName + ":" + PermitConstant.permissionItemUse, item, 
 				permit.itemUse, permit.itemUseMeta );
 				
-		for ( String item : permissions.getStringList("Crafting"))
-			unpackConfigItem( permitName + ":Crafting", item, 
+		for ( String item : config.getStringList( PermitConstant.permissionItemCraft ))
+			unpackConfigItem( permitName + ":" + PermitConstant.permissionItemCraft, item, 
 				permit.crafting, permit.craftingMeta );
 		
 		permit.enchanting = PermitPermission.fromString( 
-			permissions.getString("Enchanting", "Undefined"));
+				config.getString( PermitConstant.permissionItemEnchant, "Undefined"));
 		
 		permit.golem = PermitPermission.fromString( 
-				permissions.getString("Golem", "Golem"));
+				config.getString( PermitConstant.permissionGolems, "Golem"));
 		
 		return permit;
 	}
@@ -184,7 +184,7 @@ public class Config {
 	public static void saveConfig() {
 		// saves the main config file
 		YamlConfiguration config = loadYamlFile( conf );
-		config.set("Enabled", enabled );
+		config.set( ConfigConstant.enabled, enabled );
 		try {
 			config.save( conf );
 		} catch (IOException e) {
@@ -200,31 +200,33 @@ public class Config {
 		File source = new File( permitFolder + File.separator + permit.filename);
 		YamlConfiguration config = loadYamlFile( source );
 		
-		config.set("Name", permit.name);
-		config.set("Virtual", permit.virtual );
+		config.set( PermitConstant.name, permit.name);
+		config.set( PermitConstant.virtual, permit.virtual );
+		config.set( PermitConstant.basePrice, permit.basePrice );
+		config.set( PermitConstant.pricingMethod, permit.pricingMethod );
 		
-		config.createSection("Pricing");
-		config.set("BasePrice", permit.basePrice );
-		config.set("Method", permit.pricingMethod );
+		// TODO: Further pricing work
 		
 		List< String > result = stringRatios( permit );
-		config.set( "Pricing.Ratios", permit );
+		config.set( PermitConstant.pricingRatios, permit );
 		
-		config.createSection("Permissions");
 		result = concatenateIDs( permit.blockBreak, permit.blockBreakMeta );
-		config.set( "Permissions.BreakBlocks", result );
+		config.set( PermitConstant.permissionBlockBreak, result );
 		
 		result = concatenateIDs( permit.blockPlace, permit.blockPlaceMeta );
-		config.set( "Permissions.PlaceBlocks", result );
+		config.set( PermitConstant.permissionBlockPlace, result );
+		
+		result = concatenateIDs( permit.blockUse, permit.blockUseMeta );
+		config.set( PermitConstant.permissionBlockUse, result );		
 		
 		result = concatenateIDs( permit.itemUse, permit.itemUseMeta );
-		config.set("Permissions.UseItem", result );
+		config.set( PermitConstant.permissionItemUse, result );
 		
 		result = concatenateIDs( permit.crafting, permit.craftingMeta );
-		config.set("Permissions.Crafting", result );
+		config.set( PermitConstant.permissionItemCraft, result );
 		
-		config.set("Permissions.Enchanting", permit.enchanting.toString());
-		config.set("Permissions.Golem", permit.golem.toString());
+		config.set( PermitConstant.permissionItemEnchant, permit.enchanting.toString());
+		config.set( PermitConstant.permissionGolems, permit.golem.toString());
 
 		try {
 			config.save(source);
@@ -334,6 +336,35 @@ public class Config {
 		return config;
 	}
 }
+
+
+
+
+class ConfigConstant {
+	static public final String enabled = "enabled";
+}
+
+class PermitConstant {
+	static public final String name = "name";
+	static public final String virtual = "virtual";
+	static public final String inherits = "inherits";
+	static public final String basePrice = "pricing.basePrice";
+	static public final String pricingMethod = "pricing.method";
+	static public final String pricingRatios = "pricing.ratios";
+	static public final String pricingFactorCurrentPrice = "pricing.factor.currentPrice";
+	static public final String pricingFactorPurchase = "pricing.factor.onPurchase";
+	static public final String pricingFactorDecay = "pricing.factor.onDecay";
+	static public final String pricingDecayMethod = "pricing.factor.decay.method";
+	static public final String pricingFactorDecayTimeSettig = "pricing.factor.decay.time";
+	static public final String permissionBlockBreak = "permission.blockBreaking";
+	static public final String permissionBlockPlace = "permission.blockPlacing";
+	static public final String permissionBlockUse = "permission.blockActivating";
+	static public final String permissionItemUse = "permission.itemUse";
+	static public final String permissionItemCraft = "permission.itemCraft";
+	static public final String permissionItemEnchant = "permission.itemEnchant";
+	static public final String permissionGolems = "permission.golemConstruction";
+}
+
 
 
 

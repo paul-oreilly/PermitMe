@@ -17,14 +17,16 @@ public class PermitManager {
 	public HashMap< String, Permit > permits = new HashMap< String, Permit>();
 
 	// A reverse map from permits, from ID to a list of permits referencing that ID[:data]
-	public ReversePermitRecord breakingIndex = new ReversePermitRecord();
-	public ReverseComplexPermitRecord breakingComplexIndex = new ReverseComplexPermitRecord();
-	public ReversePermitRecord placingIndex = new ReversePermitRecord();
-	public ReverseComplexPermitRecord placingComplexIndex = new ReverseComplexPermitRecord();
-	public ReversePermitRecord usingIndex = new ReversePermitRecord();
-	public ReverseComplexPermitRecord usingComplexIndex = new ReverseComplexPermitRecord();
-	public ReversePermitRecord craftingIndex = new ReversePermitRecord();
-	public ReverseComplexPermitRecord craftingComplexIndex = new ReverseComplexPermitRecord();
+	public ReversePermitRecord blockBreakingIndex = new ReversePermitRecord();
+	public ReverseComplexPermitRecord blockBreakingComplexIndex = new ReverseComplexPermitRecord();
+	public ReversePermitRecord blockPlacingIndex = new ReversePermitRecord();
+	public ReverseComplexPermitRecord blockPlacingComplexIndex = new ReverseComplexPermitRecord();
+	public ReversePermitRecord blockUseIndex = new ReversePermitRecord();
+	public ReverseComplexPermitRecord blockUseComplexIndex = new ReverseComplexPermitRecord();
+	public ReversePermitRecord itemUseIndex = new ReversePermitRecord();
+	public ReverseComplexPermitRecord itemUseComplexIndex = new ReverseComplexPermitRecord();
+	public ReversePermitRecord itemCraftingIndex = new ReversePermitRecord();
+	public ReverseComplexPermitRecord itemCraftingComplexIndex = new ReverseComplexPermitRecord();
 	
 	// TODO: Records for enchanting, golems etc.
 	
@@ -40,14 +42,16 @@ public class PermitManager {
 	public void addPermit(Permit permit) {
 		permits.put( permit.name, permit );
 		// add each set of information to the reverse lookups
-		reverseIndexBasic( permit, permit.blockBreak, breakingIndex );
-		reverseIndexComplex( permit, permit.blockBreakMeta, breakingComplexIndex );
-		reverseIndexBasic( permit, permit.blockPlace, placingIndex );
-		reverseIndexComplex( permit, permit.blockPlaceMeta, placingComplexIndex );
-		reverseIndexBasic( permit, permit.itemUse, usingIndex );
-		reverseIndexComplex( permit, permit.itemUseMeta, usingComplexIndex );
-		reverseIndexBasic( permit, permit.crafting, craftingIndex );
-		reverseIndexComplex( permit, permit.craftingMeta, craftingComplexIndex );
+		reverseIndexBasic( permit, permit.blockBreak, blockBreakingIndex );
+		reverseIndexComplex( permit, permit.blockBreakMeta, blockBreakingComplexIndex );
+		reverseIndexBasic( permit, permit.blockPlace, blockPlacingIndex );
+		reverseIndexComplex( permit, permit.blockPlaceMeta, blockPlacingComplexIndex );
+		reverseIndexBasic( permit, permit.blockUse, blockUseIndex );
+		reverseIndexComplex( permit, permit.blockUseMeta, blockUseComplexIndex );
+		reverseIndexBasic( permit, permit.itemUse, itemUseIndex );
+		reverseIndexComplex( permit, permit.itemUseMeta, itemUseComplexIndex );
+		reverseIndexBasic( permit, permit.crafting, itemCraftingIndex );
+		reverseIndexComplex( permit, permit.craftingMeta, itemCraftingComplexIndex );
 		// TODO: Other records
 	}
 

@@ -10,6 +10,9 @@ import java.util.TreeSet;
 
 import com.oreilly.permitme.Config;
 import com.oreilly.permitme.PermitMe;
+import com.oreilly.permitme.data.BlockDataRecord;
+import com.oreilly.permitme.data.ReverseComplexPermitRecord;
+import com.oreilly.permitme.data.ReversePermitRecord;
 
 
 public class PermitManager {
@@ -27,6 +30,8 @@ public class PermitManager {
 	public ReverseComplexPermitRecord itemUseComplexIndex = new ReverseComplexPermitRecord();
 	public ReversePermitRecord itemCraftingIndex = new ReversePermitRecord();
 	public ReverseComplexPermitRecord itemCraftingComplexIndex = new ReverseComplexPermitRecord();
+	
+	private final HashMap< String, List< Permit >> queueForInheritence = new HashMap< String, List< Permit >>();
 	
 	// TODO: Records for enchanting, golems etc.
 	
@@ -53,6 +58,32 @@ public class PermitManager {
 		reverseIndexBasic( permit, permit.crafting, itemCraftingIndex );
 		reverseIndexComplex( permit, permit.craftingMeta, itemCraftingComplexIndex );
 		// TODO: Other records
+		
+		resolveInheritence( permit );
+	}
+	
+	
+	private void resolveInheritence( Permit permit ) {
+		Permit lookup;
+		// add any permits that have already loaded
+		for ( String name : permit.inheritenceAsStrings ) {
+			lookup = permits.get( name );
+			if ( lookup != null ) permit.inherits.add( lookup );
+			else permit.inheritencePending.add( name );
+		}
+		// for any remaining "willInherits", add this permit to the queueForInheritence
+		for ( String name : permit.inheritencePending ) {
+			if ( queueForInheritence.containsKey(name ) == false )
+				queueForInheritence.put( name, new LinkedList< Permit >());
+			queueForInheritence.get( name ).add( permit );
+		}
+		// see if any other permits were waiting to inherit from this one...
+		if ( queueForInheritence.containsKey( permit.name )) {
+			for ( Permit other : queueForInheritence.get( permit.name )) {
+				other.inherits.add( permit );
+				other.inheritencePending.remove( permit.name );
+			}
+		}
 	}
 
 	

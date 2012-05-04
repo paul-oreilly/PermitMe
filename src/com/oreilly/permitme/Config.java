@@ -11,10 +11,12 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import com.oreilly.permitme.permit.BlockDataRecord;
+import com.oreilly.permitme.data.BlockDataRecord;
+import com.oreilly.permitme.data.PermitPermission;
+import com.oreilly.permitme.data.PermitPriceDecayMethod;
+import com.oreilly.permitme.data.PermitPricingMethod;
+import com.oreilly.permitme.data.PermitRatio;
 import com.oreilly.permitme.permit.Permit;
-import com.oreilly.permitme.permit.PermitPermission;
-import com.oreilly.permitme.permit.PermitRatio;
 import com.oreilly.permitme.player.PermitPlayer;
 
 
@@ -58,8 +60,6 @@ public class Config {
 		File availablePermits = new File( permitFolder.getParent() + File.separator + "available" );
 		if ( ! availablePermits.exists()) availablePermits.mkdirs();
 		
-		// TODO: check example files exist
-		
 		if ( !permitFolder.exists()) {
 			permitFolder.mkdirs();
 		} else {
@@ -83,7 +83,7 @@ public class Config {
 						manager.permitManager.addPermit( permit );
 						log.info("[PermitMe] .. Permit " + permit.name + " loaded!");
 					} else log.warning("[PermitMe] !! Error while processing permit from file " + 
-						permitFiles[i].getName());
+						permitFiles[i].getName() + " (null return)");
 				}
 			}
 		}
@@ -116,7 +116,6 @@ public class Config {
 				}
 			}
 		}
-		
 		log.info("[PermitMe] Loading Complete.");
 	}
 	
@@ -127,12 +126,36 @@ public class Config {
 		FileConfiguration config = loadYamlFile( file );
 		
 		String permitName = config.getString( PermitConstant.name, "" );
-		if ( permitName == "" ) return null;
+		if ( permitName == "" ) {
+			log.warning("[PermitMe] !! The permit file " + file.getAbsolutePath() + " has no name internally defined name for the permit");
+			return null;
+		}
 		
 		Permit permit = new Permit( permitName, file.getName());
 		permit.virtual = config.getBoolean( PermitConstant.virtual, false );
+		permit.inheritenceAsStrings = config.getStringList( PermitConstant.inheritsAsStrings );
+		
+		// load pricing information
+		
 		permit.basePrice = config.getDouble( PermitConstant.basePrice, 10000);
-		permit.pricingMethod = config.getString( PermitConstant.pricingMethod, "Simple");
+		permit.pricingMethod = PermitPricingMethod.fromString( 
+				config.getString( PermitConstant.pricingMethod, "Simple"),
+				"file " + permit.filename );
+		permit.pricingRatios = PermitRatio.fromStrings(
+				config.getStringList( PermitConstant.pricingRatios ));
+		permit.pricingFactorCurrentPrice = config.getDouble( 
+				PermitConstant.pricingFactorCurrentPrice, 10000 );
+		permit.pricingFactorOnPurchase = config.getDouble(
+				PermitConstant.pricingFactorOnPurchase, 2 );
+		permit.pricingFactorOnDecay = config.getDouble(
+				PermitConstant.pricingFactorDecay, 0.5 );
+		permit.pricingDecayMethod = PermitPriceDecayMethod.fromString(
+				config.getString( PermitConstant.pricingDecayMethod, "time" ), 
+				"file " + permit.filename );
+		permit.pricingDecayTime = config.getLong(
+				PermitConstant.pricingDecayTime, 3600 );
+		
+		// load permission information
 		
 		for ( String item : config.getStringList( PermitConstant.permissionBlockBreak ))
 			unpackConfigItem( permitName + ":" + PermitConstant.permissionBlockBreak, item, 
@@ -202,15 +225,29 @@ public class Config {
 		
 		config.set( PermitConstant.name, permit.name);
 		config.set( PermitConstant.virtual, permit.virtual );
+		config.set( PermitConstant.inheritsAsStrings, permit.inheritenceAsStrings.toArray());
+		
+		// save pricing information
+		
+		config.set( PermitConstant.pricingMethod, permit.pricingMethod.toString());
 		config.set( PermitConstant.basePrice, permit.basePrice );
-		config.set( PermitConstant.pricingMethod, permit.pricingMethod );
 		
-		// TODO: Further pricing work
+		config.set( PermitConstant.pricingRatios, PermitRatio.toStrings( permit.pricingRatios ));
 		
-		List< String > result = stringRatios( permit );
-		config.set( PermitConstant.pricingRatios, permit );
+		config.set( PermitConstant.pricingFactorCurrentPrice, 
+			permit.pricingFactorCurrentPrice );
+		config.set( PermitConstant.pricingFactorOnPurchase, 
+			permit.pricingFactorOnPurchase );
+		config.set( PermitConstant.pricingFactorDecay, 
+			permit.pricingFactorOnDecay );
+		config.set( PermitConstant.pricingDecayMethod,
+			permit.pricingDecayMethod.toString());
+		config.set( PermitConstant.pricingDecayTime,
+			permit.pricingDecayTime );
 		
-		result = concatenateIDs( permit.blockBreak, permit.blockBreakMeta );
+		// save permissions
+		
+		List< String > result = concatenateIDs( permit.blockBreak, permit.blockBreakMeta );
 		config.set( PermitConstant.permissionBlockBreak, result );
 		
 		result = concatenateIDs( permit.blockPlace, permit.blockPlaceMeta );
@@ -225,8 +262,11 @@ public class Config {
 		result = concatenateIDs( permit.crafting, permit.craftingMeta );
 		config.set( PermitConstant.permissionItemCraft, result );
 		
-		config.set( PermitConstant.permissionItemEnchant, permit.enchanting.toString());
-		config.set( PermitConstant.permissionGolems, permit.golem.toString());
+		if ( permit.enchanting != null )
+			config.set( PermitConstant.permissionItemEnchant, permit.enchanting.toString());
+		
+		if ( permit.golem != null )
+			config.set( PermitConstant.permissionGolems, permit.golem.toString());
 
 		try {
 			config.save(source);
@@ -256,26 +296,13 @@ public class Config {
 	private static List< String > concatenateIDs( List< Integer > simpleIDs, BlockDataRecord complexIDs ) {
 		List< String > result = new LinkedList<String>();
 		
-		for ( Integer i : simpleIDs ) 
+		for ( Integer i : simpleIDs )
 			result.add( i.toString());
 		
 		for ( Integer id : complexIDs.keySet())
 			for ( Integer data : complexIDs.get( id ))
 				result.add( id.toString() + ":" + data.toString());
 
-		//return result.toArray( new String[0]);
-		return result;
-	}
-	
-	
-	private static List<String> stringRatios(Permit permit) {
-		List< String > result = new LinkedList< String >();
-		List< PermitRatio > queue = new LinkedList< PermitRatio >();
-		if ( permit.ratios.size() == 0 ) {
-			queue.add( PermitRatio.example());
-		}
-		for ( PermitRatio p : queue )
-			result.add( p.toString());
 		return result;
 	}
 	
@@ -347,18 +374,18 @@ class ConfigConstant {
 class PermitConstant {
 	static public final String name = "name";
 	static public final String virtual = "virtual";
-	static public final String inherits = "inherits";
+	static public final String inheritsAsStrings = "inherits";
 	static public final String basePrice = "pricing.basePrice";
 	static public final String pricingMethod = "pricing.method";
 	static public final String pricingRatios = "pricing.ratios";
 	static public final String pricingFactorCurrentPrice = "pricing.factor.currentPrice";
-	static public final String pricingFactorPurchase = "pricing.factor.onPurchase";
+	static public final String pricingFactorOnPurchase = "pricing.factor.onPurchase";
 	static public final String pricingFactorDecay = "pricing.factor.onDecay";
-	static public final String pricingDecayMethod = "pricing.factor.decay.method";
-	static public final String pricingFactorDecayTimeSettig = "pricing.factor.decay.time";
+	static public final String pricingDecayMethod = "pricing.factor.decayMethod";
+	static public final String pricingDecayTime = "pricing.factor.decayTime";
 	static public final String permissionBlockBreak = "permission.blockBreaking";
 	static public final String permissionBlockPlace = "permission.blockPlacing";
-	static public final String permissionBlockUse = "permission.blockActivating";
+	static public final String permissionBlockUse = "permission.blockUse";
 	static public final String permissionItemUse = "permission.itemUse";
 	static public final String permissionItemCraft = "permission.itemCraft";
 	static public final String permissionItemEnchant = "permission.itemEnchant";

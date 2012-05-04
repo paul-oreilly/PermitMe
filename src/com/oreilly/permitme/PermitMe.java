@@ -13,7 +13,6 @@ import com.oreilly.permitme.permit.PermitManager;
 import com.oreilly.permitme.player.PlayerManager;
 
 // TODO: Add a string translation class and config file, with language support?
-// TODO: Add support for limiting interaction with blocks (eg induction furnace) by extending the item use listener to also block on the ID of the target block
 
 
 public class PermitMe extends JavaPlugin {

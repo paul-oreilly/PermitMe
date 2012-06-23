@@ -1,0 +1,8 @@
+lib
+lib/*
+bin
+bin/*
+.m2/*
+.m2
+target
+target/*

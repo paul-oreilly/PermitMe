@@ -1,0 +1,127 @@
+/permits/enabled            general use, able to be used anywhere (rec: sym links)
+/permits/avaiable           stash of permits, actual files
+
+/locations/
+    .. universal.yml        permits that have been enabled for the entire server, and the global settings
+    .. world-[name].yml     permits that are pr world, and the settings for that world (including resience and worlguard areas)
+                                also includes all sign locations for that world
+    
+settings
+    - isolation              has it's own independent permit system            
+    - *strict-mode           enabled / disabled / inherited				<-- implement later.
+    - single-role			Only one role at a time, or is multiple ok (eg classes in pvp game)
+    - zero-cost				Sign cost override, to make all signs free (arena's etc)
+    - forget-on-death		
+    - forget-cooldown-time	anti-grief protection
+    - permits               list of permits by name (File UUID)
+
+
+world-name.yml
+    - ... list of settings ...
+    - type: world
+    - signs (string list)       takes form of "permitUUD @ x y z"
+    - sub locations             list, recurrsive
+ 
+
+Helper functions
+- When a sign is added, and name matches an available permit, auto add that permit to the list of permits for that area / world
+            
+            
+Permits need UUIDs
+ - "Knight" in one arena may differ from "Knight" in another game type! So name alone isn't enough.
+ - To support this, "isolated" sub area's / worlds
+
+
+
+Workflow:::
+
+PlayerManager.getExempt( player )
+LocationManager.getPermitLocations( location ) : List<PermitLocation>      (will have to merge if both res and region)
+Use reverse lookup on locations to see what permits may be required
+check if player has those permits
+
+
+
+LocationManager.checkAction( location, EventType, player, id, data )  
+
+
+Location based permits
+ - for each 'isolated' (top level) location, create 'virtual' permits eg "residence.arena1.knight" vs "residence.arena2.knight"
+ - player maintains string list of permits
+ - locations will have to use 'virtual' names for permits
+
+
+
+Permit creation steps...
+- Loaded from files, with unique names (eg "Knight")
+- Some permits in files are virtual, (auto exist when dependent permits are met), but don't have sign names
+- Permits has "resolve inheritience" called
+- When locations are loaded, they orignally refer to permits by their 'raw' name
+  Each location applies a modifier to their permit list, eg "nether.miner" from the orignal "miner", and
+  "overworld.residence.arena2.knight" from "knight"
+- So when locations start loading, they use a "clone" function provided by Permits, and save a reference to the result
+- Players load last, as their permit list is from the "location permits" (lpermits) names
+- Each permit keeps a record of it's "Sign Name" (the orignal pure name) tho
+  
+ 
+
+TODO:
+- Version information to be contained in all yml files
+
+** Locaitons should only inherit from their same type (eg residences from residences), 
+   with the exception that worlds can inherit from universal
+   Since world is returned (and includes universal)... then an area locaitonpermit for each area type.. no need to
+     double up with inheritence and have world data inherited and present in each set of area data
+  
+
+
+SaveInfo
+- May be attached to either permit type
+- Has the information needed for the permit to be saved (to file, sql, etc)
+- The base class for saveinfo is blank (then has a child for SaveToFile, and another for SaveToSQL)
+
+
+
+
+**************************************
+
+Get rid of location inheritance!
+- WorldGuard messes it all up anyway
+
+Have locations able to reference "templates" (eg "Arena-pvp", "town-road" etc)
+Rather then inheritance of permit locations, just return the list of area's, and then the list of all permit locations to match them
+
+So when checking residence / worldguard etc... get strings that ID all the area's involved, then match PermitLocations from there.
+
+
+****
+Sign manager needed - seperate from location system, as locations can overlap etc.. so therefore better to have signs saved
+and managed in their own class.
+
+
+
+************** New location chain *****************
+- Location Templates are loaded from "/templates" dir
+- Location records are loaded from "/locations" dir
+- As each location resolver comes online, they return a list of all locations (and parents etc) of their type
+- From this list, a location instance is made for each type, and that instance resolves all settings, inheritance etc.
+
+End result: Location lookup returns a single location instance of each type, (or) when no area's are returned at all, the location lookup will return the world instance.
+
+-> Care will need to be taken to build listeners for when area's are created, changed, inherit diferently, so instance records can be rebuilt.
+
+
+
+********** Data saving extensions *************
+
+- Can io system be redone in such a way that permits can be 'extended' with 3rd party info (eg pricing data)
+ ... can have hooks into file io that, when given a permit (for reference) return the associated data as a ConfigurationSection,
+     which gets saved in the permit file under the name of the resolver. On load, it can just be held in a map of 'external data' 
+     when requested.
+
+Permit groups (eg "default" & "town")
+ - a "town" group may give permission to break blocks in a roading section to a group of players... but the permission check
+   needs to be "all groups agree" out of "however many groups there are", and further settings on "include everything", "include everyone"
+  
+
+

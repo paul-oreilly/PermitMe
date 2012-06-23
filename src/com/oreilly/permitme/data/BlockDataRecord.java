@@ -1,9 +1,9 @@
 package com.oreilly.permitme.data;
 
-import java.util.LinkedList;
 import java.util.HashMap;
+import java.util.LinkedList;
 
-public class BlockDataRecord extends HashMap< Integer, LinkedList< Integer>>{
+public class BlockDataRecord extends HashMap< Integer, LinkedList< Integer >>{
 	private static final long serialVersionUID = 1L;
 	
 	public BlockDataRecord() {

@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.oreilly.permitme.data.TFU;
 
-// TODO: Class
 
 public class LocationTemplate {
 	

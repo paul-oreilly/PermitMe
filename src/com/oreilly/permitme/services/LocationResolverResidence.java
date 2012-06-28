@@ -7,24 +7,19 @@ import org.bukkit.Location;
 import com.bekvon.bukkit.residence.Residence;
 import com.bekvon.bukkit.residence.protection.ClaimedResidence;
 import com.bekvon.bukkit.residence.protection.ResidenceManager;
-import com.oreilly.permitme.Locations;
 import com.oreilly.permitme.PermitMe;
-import com.oreilly.permitme.api.LocationResolver;
 import com.oreilly.permitme.data.AllLocationsResult;
 
 public class LocationResolverResidence extends LocationResolver {
 
-	public PermitMe manager = null;
 	
-	
-	public LocationResolverResidence( String name, Locations manager ) {
-		super( name, manager );
+	public LocationResolverResidence( String name ) {
+		super( name );
 	}
 
 
 	@Override
 	public LinkedList< String > resolveLocation(Location location) {
-		// TODO Auto-generated method stub - resolveLocation
 		LinkedList< String > result = new LinkedList< String >();
 		ClaimedResidence res = Residence.getResidenceManager().getByLoc( location );
 		if ( res != null ) {
@@ -39,8 +34,6 @@ public class LocationResolverResidence extends LocationResolver {
 	@Override
 	public AllLocationsResult getAllLocations() {
 		// returns a list of all locations
-		// TODO:
-		//   needs a more complex data structure - list of name:(children) which in turn are name:(children) etc.
 		AllLocationsResult result = new AllLocationsResult();
 		ResidenceManager residenceManager = Residence.getResidenceManager();
 		// TODO: Error message if null

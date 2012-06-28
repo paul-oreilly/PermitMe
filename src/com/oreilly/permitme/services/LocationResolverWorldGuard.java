@@ -8,9 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.plugin.Plugin;
 
-import com.oreilly.permitme.Locations;
 import com.oreilly.permitme.PermitMe;
-import com.oreilly.permitme.api.LocationResolver;
 import com.oreilly.permitme.data.AllLocationsListNode;
 import com.oreilly.permitme.data.AllLocationsResult;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -25,8 +23,8 @@ public class LocationResolverWorldGuard extends LocationResolver {
 	public WorldGuardPlugin plugin = null;
 	
 	
-	public LocationResolverWorldGuard( String name, Locations manager ) {
-		super( name, manager );
+	public LocationResolverWorldGuard( String name ) {
+		super( name );
 	}
 	
 	
@@ -95,6 +93,7 @@ public class LocationResolverWorldGuard extends LocationResolver {
 			RegionManager regionManager = plugin.getRegionManager( world );
 			Map< String, ProtectedRegion > worldRegions = regionManager.getRegions();
 			for ( ProtectedRegion region : worldRegions.values()) {
+				PermitMe.log.info("[PermitMe] DEBUG LocationResolverWorldGuard: Region ID: " + region.getId());
 				ProtectedRegion parent = region.getParent();
 				String parentName = ( parent == null ) ? null : parent.getId();
 				result.addRecord( worldName, region.getId(), parentName );

@@ -4,11 +4,6 @@ import com.oreilly.permitme.PermitMe;
 
 // True, false, or undefined
 
-// save format bias is "enabled" and "disabled"
-
-// TODO: Class
-
-
 public enum TFU {
 	TRUE, FALSE, UNDEFINED;
 	

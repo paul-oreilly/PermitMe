@@ -3,8 +3,6 @@ package com.oreilly.permitme.record;
 import java.util.LinkedList;
 import java.util.List;
 
-// TODO: Class
-
 
 // this represents the contents of a yml / sql based location record
 

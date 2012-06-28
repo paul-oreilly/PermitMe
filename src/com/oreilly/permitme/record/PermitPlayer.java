@@ -14,5 +14,24 @@ public class PermitPlayer {
 		this.name = name;
 	}
 	
+	
+	@Override
+	public String toString() {
+		return name;
+	}
+	
+	
+	public String toHumanString() {
+		String result = "Player " + name;
+		if ( permits.size() == 0 )
+			result += " (no permits)";
+		else {
+			result += " with " + permits.size() + " permits: ";
+			for ( String permitName : permits )
+				result += "\n  - " + permitName;
+		}
+		return result;
+	}
+	
 }
 

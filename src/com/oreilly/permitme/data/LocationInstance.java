@@ -4,11 +4,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 import com.oreilly.permitme.PermitMe;
+import com.oreilly.permitme.Settings;
 import com.oreilly.permitme.record.LocationRecord;
 import com.oreilly.permitme.record.LocationTemplate;
 import com.oreilly.permitme.record.Permit;
-
-// TODO: Class
 
 // One of these will be instanced for every world, residence, region etc in the game.
 
@@ -31,6 +30,10 @@ public class LocationInstance {
 	// parent, tracked to build the isolationPrefix when required 
 	public LocationInstance parent = null;
 	
+	// TODO: Make an "ansestry" list, a list of all parents for this instance.
+	//  (To be used in place of the metadata attempts, so a plugin can just lookup where an area belongs vs their own data)
+	public LinkedList< LocationInstance > allParents = new LinkedList< LocationInstance >();
+	
 	public ReversePermitRecord blockBreakingIndex = new ReversePermitRecord();
 	public ReverseComplexPermitRecord blockBreakingComplexIndex = new ReverseComplexPermitRecord();
 	public ReversePermitRecord blockPlacingIndex = new ReversePermitRecord();
@@ -43,7 +46,7 @@ public class LocationInstance {
 	public ReverseComplexPermitRecord itemCraftingComplexIndex = new ReverseComplexPermitRecord();
 	
 	public HashMap< String, Permit > permitsByAlias = new HashMap< String, Permit >();
-	public HashMap< String, Permit > permitsBySignName = new HashMap< String, Permit >();
+	public HashMap< String, Permit > permitsByName = new HashMap< String, Permit >();
 	public HashMap< String, Permit > permitsByUID = new HashMap< String, Permit >();
 	
 	
@@ -59,10 +62,16 @@ public class LocationInstance {
 	
 	public LocationInstance( String name, LocationInstance parent, String locationType, String world ) {
 		this.name = name;
-		this.parent = ( parent == PermitMe.instance.locations.defaultLocationInstance ) ? null : parent;
 		this.locationType = ( locationType == null ) ? parent.locationType : locationType;
 		this.world = ( world == null ) ? parent.world : world;
 		
+		if ( parent != null ) 
+			if ( parent != PermitMe.instance.locations.defaultLocationInstance ) {
+				this.parent = parent;
+				allParents.addAll( parent.allParents );
+				allParents.add( parent );
+			}
+				
 		// there will always be a parent, even if it's just 'default'
 		isolationPrefix = parent.isolationPrefix;
 		// isolation itself is always false, unless set otherwise
@@ -91,12 +100,18 @@ public class LocationInstance {
 	
 	
 	public void applyRecord( LocationRecord record, PermitMe manager ) {
-		// DEBUG
-		PermitMe.log.info("[PermitMe] DEBUG: Adding record " + record.name + " to location " + name + "(" + locationType + ") in " + world );
+		if ( Settings.debugMode )
+			if ( Settings.debugLocationInstanceCreation )
+				PermitMe.log.info("[PermitMe] DEBUG: Adding record " + record.name + 
+						" to location " + name + "(" + locationType + ") in " + world );
 		
 		// TODO: Null check and error if location record doesn't contain any settings
 		for ( LocationTemplate template : record.settings ) {
-			PermitMe.log.info("[PermitMe] DEBUG: Adding settings from " + template.name );
+			// debug support
+			if ( Settings.debugMode )
+				if ( Settings.debugLocationInstanceCreation )
+					PermitMe.log.info("[PermitMe] DEBUG: Adding template:\n" + template.toHumanString());
+			//PermitMe.log.info("[PermitMe] DEBUG: Adding settings from " + template.name );
 			// TODO: Remove amenisa settings
 			/*if ( template.forgetCooldownTime > 0 ) 
 				this.forgetCooldownTime = template.forgetCooldownTime;
@@ -114,9 +129,9 @@ public class LocationInstance {
 					// TODO: Error on null
 					if ( permit != null ) {
 						permitsByUID.put( permit.UUID, permit );
-						PermitMe.log.info("[PermitMe] DEBUG: Successfully added permit " + permitUID );
+						//PermitMe.log.info("[PermitMe] DEBUG: Successfully added permit " + permitUID );
 					} else {
-						PermitMe.log.warning("[PermitMe] DEBUG: Adding of permit " + permitUID + " failed");
+						//PermitMe.log.warning("[PermitMe] DEBUG: Adding of permit " + permitUID + " failed");
 					}
 				}
 			} else {
@@ -137,6 +152,10 @@ public class LocationInstance {
 			}
 			// add type.world to prefix start
 			isolationPrefix = locationType + "." + prefix;
+			if ( Settings.debugMode )
+				if ( Settings.debugLocationInstanceCreation ) 
+					PermitMe.log.info("[PermitMe] DEBUG: Location instance " + name + 
+							" is isolated. New prefix is " + isolationPrefix );
 		}
 		// now that the prefix is known to be correct, we need to build the permit indexes...
 		for ( Permit permit : permitsByUID.values()) {
@@ -145,7 +164,7 @@ public class LocationInstance {
 			if ( isolation ) 
 				manager.permits.addAlias( permit, alias );
 			// and while we're here, add the sign index
-			permitsBySignName.put( permit.signName, permit );
+			permitsByName.put( permit.name, permit );
 			// and add the permit to the reverse indexes
 			reverseIndex( alias, permit.blockBreak, blockBreakingIndex );
 			reverseIndex( alias, permit.blockBreakComplex, blockBreakingComplexIndex );

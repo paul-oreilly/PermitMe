@@ -13,9 +13,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import com.oreilly.permitme.data.BlockDataRecord;
-import com.oreilly.permitme.data.PermitPriceDecayMethod;
-import com.oreilly.permitme.data.PermitPricingMethod;
-import com.oreilly.permitme.data.PermitRatio;
 import com.oreilly.permitme.data.TFU;
 import com.oreilly.permitme.record.LocationRecord;
 import com.oreilly.permitme.record.LocationTemplate;
@@ -33,11 +30,6 @@ import com.oreilly.permitme.record.SavedPermit;
  */
 
 
-/*
- * TODO Economic system - data, config, load, save
- * 
- */
-
 
 public class Config {
 
@@ -50,31 +42,47 @@ public class Config {
 	public static final File locationRecordFolder = new File( pluginRoot.getPath() + File.separator + "locations" );
 	public static final File locationTemplateFolder = new File( pluginRoot.getPath() + File.separator + "templates" );
 	
+	public static boolean permitsLoaded = false;
+	public static boolean locationsLoaded = false;
+	public static boolean playersLoaded = false;
 
 	
 	public static void load( PermitMe manager ) {
 		
 		FileConfiguration config = loadYamlFile( conf );
 		enabled = config.getBoolean( ConfigConstant.enabled, true );
-		// TODO: Don't process files if not enabled
 		
-		// load permits, and call config complete to assign any missing uuid's
-		loadPermits( manager );
-		manager.permits.ConfigComplete();
-		
-		// load locations
-		loadLocations( manager );
-		manager.locations.loadingComplete();
-		
-		// load players 
-		loadPlayers( manager );
-		
-		PermitMe.log.info("[PermitMe] Loading Complete.");
+		if ( enabled ) {
+			
+			if ( Settings.debugMode ) 
+				PermitMe.log.info("[PermitMe] DEBUG: Starting to load configuration");
+			
+			// load permits, and call config complete to assign any missing uuid's
+			loadPermits( manager );
+			manager.permits.ConfigComplete();
+			permitsLoaded = true;
+			
+			// load locations
+			loadLocations( manager );
+			manager.locations.loadingComplete();
+			locationsLoaded = true;
+			
+			// load players 
+			loadPlayers( manager );
+			playersLoaded = true;
+			
+			PermitMe.log.info("[PermitMe] Loading Complete.");
+			
+		} else
+			PermitMe.log.warning("[PermitMe] Plugin disabled - files will not be loaded.");
 	}
 	
 	
 	private static void loadPermits( PermitMe manager ) {
-		PermitMe.log.info("[PermitMe] Loading Permits...");
+		
+		if ( Settings.debugMode ) 
+			PermitMe.log.info("[PermitMe] Loading permit information");
+		
 		// Quick check that permit folder also has a peer called "available"
 		File availablePermits = new File( permitFolder.getParent() + File.separator + "available" );
 		if ( ! availablePermits.exists()) availablePermits.mkdirs();
@@ -85,23 +93,22 @@ public class Config {
 			// for each file in the permit folder, make a permit object 
 			File[] permitFiles = permitFolder.listFiles();
 			if ( permitFiles == null ) {
-				PermitMe.log.info("PermitMe !! No permit files found");
+				PermitMe.log.info("[PermitMe] No permit files found in " + permitFolder.getAbsolutePath());
 			} else {
 				for ( int i = 0; i < permitFiles.length; i++ ) {
 					// if it doesn't end in ".yml", ignore the file
 					if (!permitFiles[i].getName().endsWith(".yml")) continue;
-					PermitMe.log.info("[PermitMe] .. Loading permit " + permitFiles[i].getName().substring(0,
-							permitFiles[i].getName().indexOf('.')));
 					if (!permitFiles[i].canRead()) {
-						PermitMe.log.warning("[PermitMe] !! Can't read file: " + permitFiles[i].getName());
+						PermitMe.log.warning("[PermitMe] Unable to read file contents of " + permitFiles[i].getName());
 						continue;
 					}
 					// pass the file to a load method
 					SavedPermit permit = loadPermit( permitFiles[i]);
 					if ( permit != null ) {
 						manager.permits.addPermit( permit );
-						PermitMe.log.info("[PermitMe] .. Permit " + permit.signName + " loaded!");
-					} else PermitMe.log.warning("[PermitMe] !! Error while processing permit from file " + 
+						if ( Settings.debugMode ) 
+							PermitMe.log.info("[PermitMe] .. Permit " + permit.name + " loaded!");
+					} else PermitMe.log.warning("[PermitMe] Error while processing permit from file " + 
 						permitFiles[i].getName() + " (null return)");
 				}
 			}
@@ -110,18 +117,19 @@ public class Config {
 	
 	
 	private static void loadLocations( PermitMe manager ) {
-		// TODO: loadLocations
 		// load location templates
-		PermitMe.log.info("[PermitMe] Loading location templates...");
-		if ( !locationTemplateFolder.exists()) locationTemplateFolder.mkdirs();
+		if ( Settings.debugMode ) 
+			PermitMe.log.info("[PermitMe] Loading location templates...");
+		if ( !locationTemplateFolder.exists()) 
+			locationTemplateFolder.mkdirs();
 		File[] locationFiles = locationTemplateFolder.listFiles();
-		if ( locationFiles == null ) PermitMe.log.info("[PermitMe] No location templates found");
+		if ( locationFiles == null ) PermitMe.log.info("[PermitMe] No location templates found in " + 
+				locationTemplateFolder.getAbsolutePath());
 		else {
 			for ( File f : locationFiles ) {
 				if ( ! f.getName().endsWith(".yml")) continue;	
-				PermitMe.log.info("[PermitMe] Loading location template from " + f.getName());
 				if ( ! f.canRead()) {
-					PermitMe.log.warning("[PermitMe] Unable to read file data");
+					PermitMe.log.warning("[PermitMe] File " + f.getAbsolutePath() + " is unreadable.");
 					continue;
 				}
 				LocationTemplate template = loadLocationTemplate( f );
@@ -129,19 +137,22 @@ public class Config {
 					PermitMe.log.warning("[PermitMe] Error while loading file " + f.getName());
 				else {
 					manager.locations.addLocationTemplate( template );
-					PermitMe.log.info("[PermitMe] Loading of template " + f.getName() + " complete" );
+					if ( Settings.debugMode ) PermitMe.log.info("[PermitMe] Loading of template " + 
+							f.getName() + " complete" );
 				}
 			}
 		}
 		// load location records
-		PermitMe.log.info("[PermitMe] Loading location records...");
+		if ( Settings.debugMode ) 
+			PermitMe.log.info("[PermitMe] Loading location records...");
 		if ( !locationRecordFolder.exists()) locationRecordFolder.mkdirs();
 		locationFiles = locationRecordFolder.listFiles();
-		if ( locationFiles == null ) PermitMe.log.info("[PermitMe] No location records found");
+		if ( locationFiles == null ) 
+				PermitMe.log.info("[PermitMe] No location records found in " + 
+				locationRecordFolder.getAbsolutePath());
 		else {
 			for ( File f : locationFiles ) {
 				if ( ! f.getName().endsWith(".yml")) continue;	
-				PermitMe.log.info("[PermitMe] Loading location template from " + f.getName());
 				if ( ! f.canRead()) {
 					PermitMe.log.warning("[PermitMe] Unable to read file data");
 					continue;
@@ -170,8 +181,6 @@ public class Config {
 			} else {
 				for ( int i = 0; i < playerFiles.length; i++ ) {
 					if (!playerFiles[i].getName().endsWith(".yml")) continue;
-					PermitMe.log.info("[PermitMe] .. Loading player " + playerFiles[i].getName().substring(0,
-							playerFiles[i].getName().indexOf('.')));
 					if (!playerFiles[i].canRead()) {
 						PermitMe.log.warning("[PermitMe] !! Can't read file: " + playerFiles[i].getName());
 						continue;
@@ -194,14 +203,13 @@ public class Config {
 		
 		FileConfiguration config = loadYamlFile( file );
 		
-		// DEBUG
-		for ( String key : config.getKeys( false )) {
-			PermitMe.log.info("[PermitMe]DEBUG: Key in " + file.getAbsolutePath() + " [" + key + "]" );
-		}
+		if ( Settings.debugMode )
+			PermitMe.log.info("[PermitMe] Loading permit from " + file.getAbsolutePath());
 		
 		String signName = config.getString( PermitConstant.signName, "" );
 		if ( signName == "" ) {
-			PermitMe.log.warning("[PermitMe] !! The permit file " + file.getAbsolutePath() + " does not have a name for the permit" );
+			PermitMe.log.warning("[PermitMe] The permit file " + file.getAbsolutePath() + 
+					" does not have a name for the permit" );
 			return null;
 		}
 		String UUID = config.getString( PermitConstant.UUID, null );
@@ -211,7 +219,7 @@ public class Config {
 		permit.inheritenceAsStrings = config.getStringList( PermitConstant.inheritsAsStrings );
 		
 		// load pricing information
-		
+		/* TODO: Remove
 		permit.basePrice = config.getDouble( PermitConstant.basePrice, 10000);
 		permit.pricingMethod = PermitPricingMethod.fromString( 
 				config.getString( PermitConstant.pricingMethod, "Simple"),
@@ -228,7 +236,7 @@ public class Config {
 				config.getString( PermitConstant.pricingDecayMethod, "time" ), 
 				"file " + permit.filename );
 		permit.pricingDecayTime = config.getLong(
-				PermitConstant.pricingDecayTime, 3600 );
+				PermitConstant.pricingDecayTime, 3600 ); */
 		
 		// load permission information
 		
@@ -251,7 +259,13 @@ public class Config {
 		for ( String item : config.getStringList( PermitConstant.permissionItemCraft ))
 			unpackConfigItem( signName + ":" + PermitConstant.permissionItemCraft, item, 
 				permit.crafting, permit.craftingComplex );
-
+				
+		if ( Settings.debugMode ) {
+			PermitMe.log.info("[PermitMe] Loading of permit " + permit.name + " complete");
+			if ( Settings.debugPermitContents )
+				PermitMe.log.info(permit.toHumanString());
+		}
+		
 		return permit;
 	}
 	
@@ -259,6 +273,9 @@ public class Config {
 	private static LocationTemplate loadLocationTemplate( File f ) {
 		// templates are one to a file
 		FileConfiguration config = loadYamlFile( f );
+		
+		if ( Settings.debugMode )
+			PermitMe.log.info("[PemitMe] Loading template from file " + f.getAbsolutePath());
 		
 		String name = config.getString( LocationTemplateConstant.name );
 		if ( name == null ) return null;
@@ -279,9 +296,11 @@ public class Config {
 		
 		template.rawPermitUIDList = config.getStringList( LocationTemplateConstant.permitUIDList );
 		
-		// DEBUG:
-		PermitMe.log.info("[PermitMe] Template loaded (" + name + ")");
-		PermitMe.log.info( template.toHumanString());
+		if ( Settings.debugMode ) {
+			PermitMe.log.info("[PermitMe] Template loading completed for " + name );
+			if ( Settings.debugLocationTemplateContents )
+				PermitMe.log.info( template.toHumanString());
+		}
 		
 		return template;
 	}
@@ -295,20 +314,23 @@ public class Config {
 		FileConfiguration config = loadYamlFile( f );
 		String standardWarning = "[PermitMe] Malformed location record in " + f.getName() + "::";
 		
+		if ( Settings.debugMode )
+			PermitMe.log.info("[PermitMe] Loading location record from " + f.getAbsolutePath());
+		
 		Set< String > keys = config.getKeys( false );
 		for ( String key : keys ) {
 			ConfigurationSection section = config.getConfigurationSection( key );
 			if ( section == null ) continue;
-			// DEBUG:
+			/*  DEBUG:
 			for ( String str : section.getKeys(false ))
 				PermitMe.log.info("[PermitMe] DEBUG: in record " + key + " from " + f.getAbsolutePath() + " a key is [" + str + "]" );
-			// cont.
+			// cont. */
 			String name = section.getString( LocationRecordConstant.name );
 			String world = section.getString( LocationRecordConstant.world );
 			String type = section.getString( LocationRecordConstant.type );
 			List< String > settings = section.getStringList( LocationRecordConstant.settings );
 			// DEBUG:
-			PermitMe.log.info("Settings are: " + settings );
+			//PermitMe.log.info("Settings are: " + settings );
 			// check that we have all required data
 			if ( name == null ) {
 				PermitMe.log.warning( standardWarning + key + ". No name provided." );
@@ -329,8 +351,17 @@ public class Config {
 				PermitMe.log.warning( standardWarning + key + ". No settings provided." );
 				continue;					
 			}
-			result.add( new LocationRecord( name, type, world, settings ));
+			LocationRecord record = new LocationRecord( name, type, world, settings );
+			result.add( record );
 		}
+		
+		if ( Settings.debugMode ) {
+			PermitMe.log.info("[PermitMe] loading of location record file " + f.getAbsolutePath() + " complete");
+			if ( Settings.debugLocationRecordContents )
+				for ( LocationRecord record : result )
+					PermitMe.log.info( record.toHumanString());
+		}
+		
 		return result;
 	}
 	
@@ -340,14 +371,24 @@ public class Config {
 		// the file name is assumed to match the player
 		
 		FileConfiguration config = loadYamlFile( file );
-		String playerName = file.getName().substring(0, file.getName().indexOf('.'));
+		
+		if ( Settings.debugMode )
+			PermitMe.log.info("[PermitMe] Loading player information from " + file.getAbsolutePath());
+		
+		String playerName = config.getString( PlayerConstant.name );
 		PermitPlayer player = new PermitPlayer( playerName );
 		
 		// add permits
-		for ( String permitName : config.getStringList("Permits"))
+		for ( String permitName : config.getStringList( PlayerConstant.permits ))
 			if ( permitName != null ) 
 				player.permits.add( permitName );
 		
+		if ( Settings.debugMode ) {
+			PermitMe.log.info("[PermitMe] Loading of player " + playerName + " complete");
+			if ( Settings.debugPlayerContents )
+				PermitMe.log.info( player.toHumanString());
+		}
+				
 		return player;
 	}
 	
@@ -371,12 +412,13 @@ public class Config {
 		File source = new File( permitFolder + File.separator + permit.filename);
 		YamlConfiguration config = loadYamlFile( source );
 		
-		config.set( PermitConstant.signName, permit.signName);
+		config.set( PermitConstant.signName, permit.name);
+		config.set( PermitConstant.UUID, permit.UUID );
 		config.set( PermitConstant.virtual, permit.virtual );
 		config.set( PermitConstant.inheritsAsStrings, permit.inheritenceAsStrings.toArray());
 		
-		// save pricing information
-		
+		// save pricing information TODO: Remove
+		/*
 		config.set( PermitConstant.pricingMethod, permit.pricingMethod.toString());
 		config.set( PermitConstant.basePrice, permit.basePrice );
 		
@@ -392,7 +434,7 @@ public class Config {
 			permit.pricingDecayMethod.toString());
 		config.set( PermitConstant.pricingDecayTime,
 			permit.pricingDecayTime );
-		
+		*/
 		// save permissions
 		
 		List< String > result = concatenateIDs( permit.blockBreak, permit.blockBreakComplex );
@@ -430,7 +472,8 @@ public class Config {
 		String playerName = player.name;
 		File source = new File( playerFolder + File.separator + playerName + ".yml" );
 		YamlConfiguration config = loadYamlFile( source );
-		config.set("Permits", player.permits );
+		config.set( PlayerConstant.name, player.name );
+		config.set( PlayerConstant.permits, player.permits );
 		try {
 			config.save( source );
 		} catch (IOException e) {
@@ -456,15 +499,12 @@ public class Config {
 	
 	
 	private static void unpackConfigItem(String identity, String item, LinkedList<Integer> simple, BlockDataRecord complex ) {
-		// DEBUG
-		PermitMe.log.info("[PermitMe] DEBUG: Unpacking config item: " + item + " in " + identity );
 		int id; int data;
 		String[] split = item.split(":");
 		switch( split.length ) {
 		case 1: {
 			id = Integer.parseInt( split[0] );
 			simple.add( id );
-			PermitMe.log.info("[PermitMe] DEBUG: added id " + id );
 			return;
 		}
 		case 2: {
@@ -525,26 +565,32 @@ class ConfigConstant {
 }
 
 
+class PlayerConstant {
+	static public final String name = "name";
+	static public final String permits = "permits";
+}
+
+
 class PermitConstant {
 	static public final String signName = "permitName";
 	static public final String UUID = "UUID";
 	static public final String virtual = "virtual";
-	static public final String inheritsAsStrings = "inherits";
-	static public final String basePrice = "pricing.basePrice";
+	static public final String inheritsAsStrings = "inherits";/*
+	static public final String basePrice = "pricing.basePrice"; 
 	static public final String pricingMethod = "pricing.method";
 	static public final String pricingRatios = "pricing.ratios";
 	static public final String pricingFactorCurrentPrice = "pricing.factor.currentPrice";
 	static public final String pricingFactorOnPurchase = "pricing.factor.onPurchase";
 	static public final String pricingFactorDecay = "pricing.factor.onDecay";
 	static public final String pricingDecayMethod = "pricing.factor.decayMethod";
-	static public final String pricingDecayTime = "pricing.factor.decayTime";
-	static public final String permissionBlockBreak = "permits.blockBreaking";
-	static public final String permissionBlockPlace = "permits.blockPlacing";
-	static public final String permissionBlockUse = "permits.blockUse";
-	static public final String permissionItemUse = "permits.itemUse";
-	static public final String permissionItemCraft = "permits.itemCraft";
-	static public final String permissionItemEnchant = "permits.itemEnchant";
-	static public final String permissionGolems = "permits.golemConstruction";
+	static public final String pricingDecayTime = "pricing.factor.decayTime"; */
+	static public final String permissionBlockBreak = "allows.blockBreaking";
+	static public final String permissionBlockPlace = "allows.blockPlacing";
+	static public final String permissionBlockUse = "allows.blockUse";
+	static public final String permissionItemUse = "allows.itemUse";
+	static public final String permissionItemCraft = "allows.itemCraft";
+	static public final String permissionItemEnchant = "allows.itemEnchant";
+	static public final String permissionGolems = "allows.golemConstruction";
 }
 
 

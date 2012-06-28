@@ -19,9 +19,6 @@ import com.oreilly.permitme.data.PermitAction;
 
 
 // TODO: Add a string translation class and config file, with language support?
-// TODO: Add a onLoad method, that registers listeners for PluginEnableEvent and PluginDisableEvent for services
-// TODO: Find a way to detect when a plugin has -finished- being enabled!
-
 
 
 public class PermitMe extends JavaPlugin {
@@ -37,6 +34,8 @@ public class PermitMe extends JavaPlugin {
 	public Locations locations;
 	
 	public Server server;
+	
+	
 	
 	
 	@Override
@@ -74,13 +73,8 @@ public class PermitMe extends JavaPlugin {
 	}
 	
 	
-	// TODO: Location settings - strict handling
-	public boolean isActionAllowed( Player player, PermitAction action, Location location, int id, int data ) {
-		if ( players.hasPermission( player, "exempt" )) return true;
-		List< LocationInstance > locationInstances = locations.getLocationInstances( location );
-		// TODO: Errors if no location instances
-		if ( locationInstances == null ) return true;
-		if ( locationInstances.size() == 0 ) return true;
+	public HashSet< String > getRequiredPermits( PermitAction action, List< LocationInstance > locationInstances,
+			int id, int data ) {
 		HashSet< String > requiredPermits = new HashSet< String >();
 		Collection< String > collection = null;
 		switch ( action ) {
@@ -134,7 +128,28 @@ public class PermitMe extends JavaPlugin {
 				}
 				break;					
 			}
-		}
+		}		
+		return requiredPermits;
+	}
+	
+	
+	public boolean isActionAllowed( Player player, PermitAction action, Location location, int id, int data ) {
+		if ( players.hasPermission( player, "exempt" )) return true;
+		List< LocationInstance > locationInstances = locations.getLocationInstances( location );
+		HashSet< String > requiredPermits = getRequiredPermits( action, locationInstances, id, data );
+		return isActionAllowed( player, action, location, locationInstances, requiredPermits, id, data );
+	}
+	
+	
+	// TODO: Location settings - strict handling
+	public boolean isActionAllowed( Player player, PermitAction action, Location location, 
+			List< LocationInstance > locationInstances, HashSet< String > requiredPermits, int id, int data ) {
+		
+		if ( players.hasPermission( player, "exempt" )) return true;
+		// TODO: Errors if no location instances
+		if ( locationInstances == null ) return true;
+		if ( locationInstances.size() == 0 ) return true;
+
 		if ( requiredPermits.isEmpty()) {
 			// DEBUG:
 			log.info("No permits exist to restrict " + player.getDisplayName() + " from " + action.asHumanString() + 

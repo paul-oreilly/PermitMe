@@ -4,9 +4,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.oreilly.permitme.data.BlockDataRecord;
-import com.oreilly.permitme.data.PermitPriceDecayMethod;
-import com.oreilly.permitme.data.PermitPricingMethod;
-import com.oreilly.permitme.data.PermitRatio;
 
 
 
@@ -22,20 +19,21 @@ import com.oreilly.permitme.data.PermitRatio;
 
 public class Permit {
 
-	public String signName;
+	public String name;
 	public String UUID;
 	public double basePrice;
 	public boolean virtual;
 	public List< String > inheritenceAsStrings = new LinkedList< String >(); 
 	public List< String > inheritencePending = new LinkedList< String >();
 	public List< Permit > inherits = new LinkedList< Permit >();
+	/*
 	public PermitPricingMethod pricingMethod;
 	public List< PermitRatio > pricingRatios = new LinkedList< PermitRatio >();
 	public double pricingFactorCurrentPrice;
 	public double pricingFactorOnPurchase;
 	public double pricingFactorOnDecay;
 	public PermitPriceDecayMethod pricingDecayMethod;
-	public long pricingDecayTime;
+	public long pricingDecayTime; */
 	
 	public LinkedList<Integer> blockBreak = new LinkedList<Integer>();
 	public BlockDataRecord blockBreakComplex = new BlockDataRecord();  
@@ -53,8 +51,9 @@ public class Permit {
 	
 	
 	public Permit( String UUID, String signName ) {
+		super();
 		this.UUID = UUID;
-		this.signName = signName;
+		this.name = signName;
 	}
 	
 	
@@ -65,7 +64,7 @@ public class Permit {
 	
 	
 	public String toHumanString() {
-		String result = "Permit named " + signName + " with UUID " + UUID;
+		String result = "Permit named " + name + " with UUID " + UUID;
 		String sbreaking = debugString( blockBreak ) + debugString( blockBreakComplex );
 		String splacing = debugString( blockPlace ) + debugString( blockPlaceComplex );
 		String sblockuse = debugString( blockUse ) + debugString( blockUseComplex );

@@ -44,7 +44,7 @@ public class PermitSign {
 	@Override
 	public String toString() {
 		// save format is "permitUUID @ x y z"
-		return ( permit.signName + " @ " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ());
+		return ( permit.name + " @ " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ());
 	}
 	
 	

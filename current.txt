@@ -106,6 +106,19 @@ and managed in their own class.
 - As each location resolver comes online, they return a list of all locations (and parents etc) of their type
 - From this list, a location instance is made for each type, and that instance resolves all settings, inheritance etc.
 
+
+
+
+************ Events + passing locationInstances ************
+- Split PermitMe check into "GetInstances" and "CheckPermission" style methods
+- In the event handlers, before they return, generate a "PermitMe[Event]" that contains all the instance information + orignal event
+  In this way, other plugins can make decisions etc as well
+
+OR: Have PermitMe cache the last x location instance lookups, so a plugin call to GetInstances doesn't take as long
+    This will have the same kind of effect, with less complex code and very similar speed.
+    ? Two rotating data structures, reset oldest when both are 'full' to keep most recent 10-20 in memory?
+    
+
 End result: Location lookup returns a single location instance of each type, (or) when no area's are returned at all, the location lookup will return the world instance.
 
 -> Care will need to be taken to build listeners for when area's are created, changed, inherit diferently, so instance records can be rebuilt.
@@ -122,6 +135,10 @@ End result: Location lookup returns a single location instance of each type, (or
 Permit groups (eg "default" & "town")
  - a "town" group may give permission to break blocks in a roading section to a group of players... but the permission check
    needs to be "all groups agree" out of "however many groups there are", and further settings on "include everything", "include everyone"
-  
+
+Data extension support needed for permits, and LocationRecord / LocationInstance
+ - Permits are easier - HashMap, and PermitIOHandler interface with to/from yml/sql
+ - LocationRecords - like permits, but also "Apply record to instance" and "new instance with parent.." methods
+   
 
 

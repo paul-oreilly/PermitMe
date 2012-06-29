@@ -4,9 +4,25 @@ name: PermitMe
 version: 0.1
 softdepend: [Vault]
 
+commands:
+    permitme:
+        discription: Admin functions for permitme
+        usage: use /permitme ? for help
+    knowledge:
+        discription: Player functions for permitme
+        usage: use /knowledge ? for help
+  
 permissions:
     PermitMe.exempt:
         discription: Excempts a player from needing permits
         default: op
-
+    PermitMe.modify.players:
+        discription: Allows altering player information, adding and removing permits etc.
+        default: op
+    PermitMe.modify.templates:
+        discription: Allows altering template information
+        default: op
+    PermitMe.modify.locations:
+        discription: Allows changing the settings of a location, applying templates etc.
+        default: op
 

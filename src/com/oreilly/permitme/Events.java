@@ -29,6 +29,8 @@ import com.oreilly.permitme.events.PermitMeBlockBreakEvent;
 import com.oreilly.permitme.events.PermitMeBlockPlaceEvent;
 import com.oreilly.permitme.events.PermitMeItemCraftEvent;
 import com.oreilly.permitme.events.PermitMeItemUseEvent;
+import com.oreilly.permitme.events.PermitMePlayerAddPermit;
+import com.oreilly.permitme.events.PermitMePlayerRemovePermit;
 import com.oreilly.permitme.events.PermitMePrepareItemCraftEvent;
 
 //TODO Support for golem construction
@@ -349,6 +351,24 @@ public class Events implements Listener {
 		for ( Player player : event.players )
 			player.closeInventory();
 		}		
+	}
+	
+	
+	@EventHandler( priority = EventPriority.MONITOR )
+	public void onPlayerAddPermit( PermitMePlayerAddPermit event ) {
+		if ( event.allow ) {
+			event.permitPlayer.permits.add( event.permitAlias );
+			Config.savePlayer( event.permitPlayer );
+		}
+	}
+	
+	
+	@EventHandler( priority = EventPriority.MONITOR )
+	public void onPlayerRemovePermit( PermitMePlayerRemovePermit event ) {
+		if ( event.allow ) {
+			event.permitPlayer.permits.remove( event.permitAlias );
+			Config.savePlayer( event.permitPlayer );
+		}
 	}
 	
 	/*

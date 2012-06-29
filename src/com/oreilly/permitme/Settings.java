@@ -9,5 +9,7 @@ public class Settings {
 	public static final boolean debugLocationTemplateContents = false;
 	public static final boolean debugLocationRecordContents = false;
 	public static final boolean debugPlayerContents = false;
-	public static final boolean debugLocationInstanceCreation = true;
+	public static final boolean debugLocationInstanceCreation = false;
+	public static final boolean debugCommandExecution = true;
+	public static final boolean debugCommandCreation = true;
 }

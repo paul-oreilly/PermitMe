@@ -10,12 +10,18 @@ import net.milkbowl.vault.permission.Permission;
 
 import org.bukkit.Location;
 import org.bukkit.Server;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.oreilly.permitme.data.LocationInstance;
 import com.oreilly.permitme.data.PermitAction;
+import com.oreilly.permitme.events.PermitMePlayerAddPermit;
+import com.oreilly.permitme.events.PermitMePlayerRemovePermit;
+import com.oreilly.permitme.record.Permit;
+import com.oreilly.permitme.record.PermitPlayer;
 
 
 // TODO: Add a string translation class and config file, with language support?
@@ -36,7 +42,10 @@ public class PermitMe extends JavaPlugin {
 	public Server server;
 	
 	
-	
+	public PermitMe() {
+		super();
+		Commands.loadCommands();
+	}
 	
 	@Override
 	public void onEnable() {
@@ -53,9 +62,8 @@ public class PermitMe extends JavaPlugin {
 		Config.load( this );
 		
 		registerListeners();
-		loadEconomy();
+		//loadEconomy();
 		loadPermissions();
-		setupCommands();
 	}
 	
 	
@@ -69,8 +77,39 @@ public class PermitMe extends JavaPlugin {
 		permits.save();
 		log.info("[PermitMe] .. save complete");
 		log.info("[PermitMe] -> Disabled.");
+		// TODO: Shut down data structures
 		instance = null;
 	}
+	
+	
+	public boolean addPermitToPlayer( String playerName, String permitAlias ) {
+		PermitPlayer permitPlayer = players.getPlayer( playerName );
+		Permit permit = permits.permitsByAlias.get( permitAlias );
+		if ( permit == null ) {
+			PermitMe.log.warning("[PermitMe] addPermitToPlayer has failed" + 
+					", as no permit with the alias " + permitAlias + " exists" );
+			return false;
+		}
+		PermitMePlayerAddPermit event = new PermitMePlayerAddPermit( permitPlayer, permit, permitAlias, true );
+		getServer().getPluginManager().callEvent( event );
+		return event.allow;
+	}
+	
+	
+	public boolean removePermitFromPlayer( String playerName, String permitAlias ) {
+		PermitPlayer permitPlayer = players.getPlayer( playerName );
+		Permit permit = permits.permitsByAlias.get( permitAlias );
+		if ( permit == null ) {
+			PermitMe.log.warning("[PermitMe] removePermitFromPlayer has failed" + 
+					", as no permit with the alias " + permitAlias + " exists" );
+			return false;
+		}
+		PermitMePlayerRemovePermit event = new PermitMePlayerRemovePermit( permitPlayer, permit, permitAlias, true );
+		getServer().getPluginManager().callEvent( event );
+		return event.allow;
+	}
+	
+	
 	
 	
 	public HashSet< String > getRequiredPermits( PermitAction action, List< LocationInstance > locationInstances,
@@ -168,11 +207,18 @@ public class PermitMe extends JavaPlugin {
 	}
 	
 	
+	@Override
+	public boolean onCommand( CommandSender sender, Command cmd, String commandLabel, String[] args ) {
+		return Commands.runCommand(sender, cmd, commandLabel, args);
+	}
+	
+	
 	private void registerListeners() {
 		this.getServer().getPluginManager().registerEvents( new Events( this ), this );
 	}
 	
 	
+	/* TODO: Remove
 	private void loadEconomy() {
 		Server server = getServer();
 		if ( server.getPluginManager().getPlugin("Vault") == null ) {
@@ -186,7 +232,7 @@ public class PermitMe extends JavaPlugin {
 			return;
 		}
 		economy = provider.getProvider();
-	}
+	} */
 	
 	
 	private void loadPermissions() {
@@ -205,9 +251,7 @@ public class PermitMe extends JavaPlugin {
 	}
 	
 	
-	private void setupCommands() {
-		// TODO: In-game commands, handler and alias config
-	}
+	
 	
 	
 	

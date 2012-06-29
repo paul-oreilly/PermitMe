@@ -5,7 +5,6 @@ import java.util.Set;
 
 import org.bukkit.entity.Player;
 
-import com.oreilly.permitme.record.Permit;
 import com.oreilly.permitme.record.PermitPlayer;
 
 
@@ -22,27 +21,26 @@ public class Players {
 	public void addPlayer(PermitPlayer player) {
 		players.put( player.name, player );
 	}
+	
+	
+	public PermitPlayer getPlayer( String playerName ) {
+		PermitPlayer player = players.get( playerName );
+		if ( player == null ) {
+			player = new PermitPlayer( playerName );
+			addPlayer( player );
+		}
+		return player;
+	}
 
 
 	public void save() {
 		for ( PermitPlayer player : players.values())
 			Config.savePlayer(player);
 	}
-
 	
-	public boolean hasPermit( Player player, HashMap< String, Permit> permits ) {
-		PermitPlayer permitPlayer = players.get( player.getName());
-		if ( permitPlayer == null ) {
-			PermitMe.log.info("[PermitMe]  Player " + player.getName() + " has no permits" );
-			return false;
-		}
-		for ( Permit permit : permits.values())
-			if ( permitPlayer.permits.contains( permit.UUID )) return true;
-		return false;
-	}
 	
-	// TODO: Remove
-	public boolean hasPermit( Player player, Set<String> permitsAliasList) {
+	// TODO: Add support for universal permits (held by all players)
+	public boolean hasPermit( Player player, Set<String> permitsAliasList ) {
 		PermitPlayer permitPlayer = players.get( player.getName());
 		if ( permitPlayer == null ) {
 			PermitMe.log.info("[PermitMe]  Player " + player.getName() + " has no permits" );

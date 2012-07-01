@@ -29,8 +29,8 @@ import com.oreilly.permitme.events.PermitMeBlockBreakEvent;
 import com.oreilly.permitme.events.PermitMeBlockPlaceEvent;
 import com.oreilly.permitme.events.PermitMeItemCraftEvent;
 import com.oreilly.permitme.events.PermitMeItemUseEvent;
-import com.oreilly.permitme.events.PermitMePlayerAddPermit;
-import com.oreilly.permitme.events.PermitMePlayerRemovePermit;
+import com.oreilly.permitme.events.PermitMePlayerAddPermitEvent;
+import com.oreilly.permitme.events.PermitMePlayerRemovePermitEvent;
 import com.oreilly.permitme.events.PermitMePrepareItemCraftEvent;
 
 //TODO Support for golem construction
@@ -40,16 +40,12 @@ import com.oreilly.permitme.events.PermitMePrepareItemCraftEvent;
 public class Events implements Listener {
 
 	private final PermitMe manager;
-	
-	public static final Integer[] SIGN_ID_LIST = { 63, 68 };
-
-	
+		
 	public Events( PermitMe manager ) {
 		this.manager = manager;
 	}
 
-	
-	
+
 	@EventHandler( priority = EventPriority.HIGHEST )
 	public void onBlockBreak( BlockBreakEvent event ) {
 		
@@ -77,7 +73,7 @@ public class Events implements Listener {
 	}
 	
 	
-	@EventHandler( priority = EventPriority.MONITOR )
+	@EventHandler( priority = EventPriority.HIGHEST )
 	public void onPermitMeBlockBreak( PermitMeBlockBreakEvent event ) {
 		if ( ! event.allowAction ) {
 			event.orignalEvent.setCancelled( true );
@@ -116,7 +112,7 @@ public class Events implements Listener {
 	}
 	
 	
-	@EventHandler( priority = EventPriority.MONITOR )
+	@EventHandler( priority = EventPriority.HIGHEST )
 	public void onPermitMeBlockPlace( PermitMeBlockPlaceEvent event ) {
 		if ( ! event.allowAction ) {
 			event.orignalEvent.setCancelled( true );
@@ -146,16 +142,6 @@ public class Events implements Listener {
 		int blockid = block.getTypeId();
 		int blockdata = block.getData();
 		
-		/* TODO: Remove
-		// check for sign interactions
-		for ( int signID : SIGN_ID_LIST ) {
-			if ( block.getTypeId() == signID ) {
-				if ( action == Action.LEFT_CLICK_BLOCK ) handleSignRefresh( event );
-				if ( action == Action.RIGHT_CLICK_BLOCK ) handleSignInteraction( event );
-				break;
-			}
-		}	*/
-		
 		// if the player is exempt, don't do anything
 		if ( manager.players.hasPermission( player, "exempt")) return;
 		
@@ -173,22 +159,24 @@ public class Events implements Listener {
 				locationInstances, requiredPermits, allow );
 		PermitMe.instance.getServer().getPluginManager().callEvent( permitMeEvent );		
 		
-		// check block use
-		if ( action == Action.RIGHT_CLICK_BLOCK ) {
-			locationInstances = PermitMe.instance.locations.getLocationInstances( blocklocation );
-			requiredPermits = PermitMe.instance.getRequiredPermits( PermitAction.BLOCKUSE, 
-							locationInstances, blockid, blockdata );
-			allow = PermitMe.instance.isActionAllowed( player, PermitAction.BLOCKUSE, 
-					blocklocation, locationInstances, requiredPermits, blockid, blockdata );
-			// create and fire off event
-			PermitMeBlockActivationEvent permitMeEvent2 = new PermitMeBlockActivationEvent( event, player, 
-					locationInstances, requiredPermits, allow );
-			PermitMe.instance.getServer().getPluginManager().callEvent( permitMeEvent2 );			
+		// check block use, assuming we havn't already blocked the event...
+		if ( ! event.isCancelled()) {
+			if ( action == Action.RIGHT_CLICK_BLOCK ) {
+				locationInstances = PermitMe.instance.locations.getLocationInstances( blocklocation );
+				requiredPermits = PermitMe.instance.getRequiredPermits( PermitAction.BLOCKUSE, 
+								locationInstances, blockid, blockdata );
+				allow = PermitMe.instance.isActionAllowed( player, PermitAction.BLOCKUSE, 
+						blocklocation, locationInstances, requiredPermits, blockid, blockdata );
+				// create and fire off event
+				PermitMeBlockActivationEvent permitMeEvent2 = new PermitMeBlockActivationEvent( event, player, 
+						locationInstances, requiredPermits, allow );
+				PermitMe.instance.getServer().getPluginManager().callEvent( permitMeEvent2 );			
+			}
 		}
 	}
 	
 	
-	@EventHandler( priority = EventPriority.MONITOR )
+	@EventHandler( priority = EventPriority.HIGHEST )
 	public void onPermitMeItemUse( PermitMeItemUseEvent event ) {
 		if ( ! event.allowAction ) {
 			event.orignalEvent.setCancelled( true );
@@ -197,7 +185,7 @@ public class Events implements Listener {
 	}
 	
 	
-	@EventHandler( priority = EventPriority.MONITOR )
+	@EventHandler( priority = EventPriority.HIGHEST )
 	public void onPermitMeBlockActivation( PermitMeBlockActivationEvent event ) {
 		if ( ! event.allowAction ) {
 			event.orignalEvent.setCancelled( true );
@@ -232,7 +220,7 @@ public class Events implements Listener {
 	}
 	
 	
-	@EventHandler( priority = EventPriority.MONITOR )
+	@EventHandler( priority = EventPriority.HIGHEST )
 	public void onPermitMeItemCraft( PermitMeItemCraftEvent event ) {
 		if ( ! event.allowAction ) {
 			event.orignalEvent.setCancelled( true );
@@ -308,7 +296,7 @@ public class Events implements Listener {
 	}
 	
 	
-	@EventHandler( priority = EventPriority.MONITOR )
+	@EventHandler( priority = EventPriority.HIGHEST )
 	public void onPermitMePrepareItemCraft( PermitMePrepareItemCraftEvent event ) {
 		if ( ! event.allowAction ) {
 		ItemStack craftingResult = event.orignalEvent.getRecipe().getResult();
@@ -354,62 +342,23 @@ public class Events implements Listener {
 	}
 	
 	
-	@EventHandler( priority = EventPriority.MONITOR )
-	public void onPlayerAddPermit( PermitMePlayerAddPermit event ) {
+	@EventHandler( priority = EventPriority.HIGHEST )
+	public void onPlayerAddPermit( PermitMePlayerAddPermitEvent event ) {
 		if ( event.allow ) {
-			event.permitPlayer.permits.add( event.permitAlias );
+			PermitMe.instance.players.addPermit( event.permitAlias, event.permitPlayer );
+			//event.permitPlayer.permits.add( event.permitAlias );
 			Config.savePlayer( event.permitPlayer );
 		}
 	}
 	
 	
-	@EventHandler( priority = EventPriority.MONITOR )
-	public void onPlayerRemovePermit( PermitMePlayerRemovePermit event ) {
+	@EventHandler( priority = EventPriority.HIGHEST )
+	public void onPlayerRemovePermit( PermitMePlayerRemovePermitEvent event ) {
 		if ( event.allow ) {
-			event.permitPlayer.permits.remove( event.permitAlias );
+			PermitMe.instance.players.removePermit( event.permitAlias, event.permitPlayer );
+			//event.permitPlayer.permits.remove( event.permitAlias );
 			Config.savePlayer( event.permitPlayer );
 		}
 	}
-	
-	/*
-	@EventHandler
-	public void onSignChangeEvent( SignChangeEvent event ) {
-		// TODO OnSignChangeEvent method
-		// Called when text on a sign is changed (or created)
-		Player player = event.getPlayer();
-		player.sendMessage("Text of sign has changed to " + StringUtils.join( event.getLines(), "|"));
-	}
-
-
-	
-	private void handleSignInteraction( PlayerInteractEvent event ) {
-		// TODO handleSignInteraction method
-		Player player = event.getPlayer();
-		BlockState block = event.getClickedBlock().getState();
-		
-		if ( block instanceof Sign ) {
-			Sign sign = (Sign) block;
-			PermitMe.log.info("DEBUG: Sign info is " + StringUtils.join( sign.getLines(), "|"));
-			int count;
-			try { 
-				count = Integer.parseInt( sign.getLine(3));
-			} catch ( NumberFormatException e ) {
-				count = 0;
-			}
-			sign.setLine(3, Integer.toString(count + 1));
-			sign.update( true );
-		}
-		player.sendMessage("Sign interaction tracked");
-		
-	}
-	
-	
-	private void handleSignRefresh( PlayerInteractEvent event ) {
-		// TODO handleSignRefresh method
-		Player player = event.getPlayer();
-		player.sendMessage("Sign refresh tracked");
-	}
-	*/
-	
 
 }

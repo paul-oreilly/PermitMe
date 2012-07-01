@@ -381,7 +381,8 @@ public class Config {
 		// add permits
 		for ( String permitName : config.getStringList( PlayerConstant.permits ))
 			if ( permitName != null ) 
-				player.permits.add( permitName );
+				PermitMe.instance.players.addPermit( permitName, player );
+				//player.permits.add( permitName );
 		
 		if ( Settings.debugMode ) {
 			PermitMe.log.info("[PermitMe] Loading of player " + playerName + " complete");

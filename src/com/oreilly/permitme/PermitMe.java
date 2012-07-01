@@ -18,8 +18,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.oreilly.permitme.data.LocationInstance;
 import com.oreilly.permitme.data.PermitAction;
-import com.oreilly.permitme.events.PermitMePlayerAddPermit;
-import com.oreilly.permitme.events.PermitMePlayerRemovePermit;
+import com.oreilly.permitme.events.PermitMeEnableCompleteEvent;
+import com.oreilly.permitme.events.PermitMePlayerAddPermitEvent;
+import com.oreilly.permitme.events.PermitMePlayerRemovePermitEvent;
 import com.oreilly.permitme.record.Permit;
 import com.oreilly.permitme.record.PermitPlayer;
 
@@ -45,12 +46,11 @@ public class PermitMe extends JavaPlugin {
 	public PermitMe() {
 		super();
 		Commands.loadCommands();
+		instance = this;
 	}
 	
 	@Override
 	public void onEnable() {
-		
-		instance = this;
 		server = this.getServer();
 		
 		// start the managers
@@ -64,6 +64,9 @@ public class PermitMe extends JavaPlugin {
 		registerListeners();
 		//loadEconomy();
 		loadPermissions();
+		
+		PermitMeEnableCompleteEvent event = new PermitMeEnableCompleteEvent();
+		getServer().getPluginManager().callEvent( event );
 	}
 	
 	
@@ -90,7 +93,7 @@ public class PermitMe extends JavaPlugin {
 					", as no permit with the alias " + permitAlias + " exists" );
 			return false;
 		}
-		PermitMePlayerAddPermit event = new PermitMePlayerAddPermit( permitPlayer, permit, permitAlias, true );
+		PermitMePlayerAddPermitEvent event = new PermitMePlayerAddPermitEvent( permitPlayer, permit, permitAlias, true );
 		getServer().getPluginManager().callEvent( event );
 		return event.allow;
 	}
@@ -104,7 +107,7 @@ public class PermitMe extends JavaPlugin {
 					", as no permit with the alias " + permitAlias + " exists" );
 			return false;
 		}
-		PermitMePlayerRemovePermit event = new PermitMePlayerRemovePermit( permitPlayer, permit, permitAlias, true );
+		PermitMePlayerRemovePermitEvent event = new PermitMePlayerRemovePermitEvent( permitPlayer, permit, permitAlias, true );
 		getServer().getPluginManager().callEvent( event );
 		return event.allow;
 	}

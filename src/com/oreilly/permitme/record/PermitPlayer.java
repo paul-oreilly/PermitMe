@@ -1,14 +1,13 @@
 package com.oreilly.permitme.record;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
 
 
 
 public class PermitPlayer {
 
 	public String name;
-	public List< String > permits = new LinkedList< String >();
+	public HashSet< String > permits = new HashSet< String >();
 	
 	public PermitPlayer( String name ) {
 		this.name = name;
@@ -18,6 +17,13 @@ public class PermitPlayer {
 	@Override
 	public String toString() {
 		return name;
+	}
+	
+	
+	public HashSet< String > getPermits() {
+		HashSet< String > result = new HashSet< String >();
+		result.addAll( permits );
+		return result;
 	}
 	
 	

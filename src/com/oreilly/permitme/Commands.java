@@ -17,7 +17,7 @@ class CommandGroup {
 }
 
 
-abstract class Commands {
+abstract public class Commands {
 	
 	static public HashMap< String, CommandGroup > commandList = 
 			new HashMap< String, CommandGroup >();
@@ -103,7 +103,7 @@ abstract class Commands {
 			currentGroup.commandsByArgCount.put( dataArgs, this );
 	}
 	
-	abstract boolean run( CommandSender sender, Command cmd, String commandLabel, String[] data );
+	abstract public boolean run( CommandSender sender, Command cmd, String commandLabel, String[] data );
 }
 
 

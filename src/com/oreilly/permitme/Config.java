@@ -35,12 +35,12 @@ public class Config {
 
 	public static boolean enabled;
 	
-	public static final File pluginRoot = new File("plugins" + File.separator + "PermitMe");
-	public static final File conf = new File( pluginRoot.getPath() + File.separator + "config.yml");
-	public static final File permitFolder = new File( pluginRoot.getPath() + File.separator + "permits" + File.separator + "enabled");
-	public static final File playerFolder = new File( pluginRoot.getPath() + File.separator + "players");
-	public static final File locationRecordFolder = new File( pluginRoot.getPath() + File.separator + "locations" );
-	public static final File locationTemplateFolder = new File( pluginRoot.getPath() + File.separator + "templates" );
+	public static File pluginRoot = null;
+	public static File conf = null;
+	public static File permitFolder = null;
+	public static File playerFolder = null;
+	public static File locationRecordFolder = null;
+	public static File locationTemplateFolder = null;
 	
 	public static boolean permitsLoaded = false;
 	public static boolean locationsLoaded = false;
@@ -48,6 +48,8 @@ public class Config {
 
 	
 	public static void load( PermitMe manager ) {
+		
+		loadFilePaths();
 		
 		FileConfiguration config = loadYamlFile( conf );
 		enabled = config.getBoolean( ConfigConstant.enabled, true );
@@ -75,6 +77,16 @@ public class Config {
 			
 		} else
 			PermitMe.log.warning("[PermitMe] Plugin disabled - files will not be loaded.");
+	}
+	
+	
+	private static void loadFilePaths() {
+		pluginRoot = PermitMe.instance.getDataFolder();
+		conf = new File( pluginRoot.getPath() + File.separator + "config.yml");
+		permitFolder = new File( pluginRoot.getPath() + File.separator + "permits" + File.separator + "enabled");
+		playerFolder = new File( pluginRoot.getPath() + File.separator + "players");
+		locationRecordFolder = new File( pluginRoot.getPath() + File.separator + "locations" );
+		locationTemplateFolder = new File( pluginRoot.getPath() + File.separator + "templates" );		
 	}
 	
 	
@@ -474,7 +486,10 @@ public class Config {
 		File source = new File( playerFolder + File.separator + playerName + ".yml" );
 		YamlConfiguration config = loadYamlFile( source );
 		config.set( PlayerConstant.name, player.name );
-		config.set( PlayerConstant.permits, player.permits );
+		// Since we can't save 'sets', we need to convert permits to a list 
+		LinkedList< String > playerPermits = new LinkedList< String >();
+		playerPermits.addAll( player.permits );
+		config.set( PlayerConstant.permits, playerPermits );
 		try {
 			config.save( source );
 		} catch (IOException e) {

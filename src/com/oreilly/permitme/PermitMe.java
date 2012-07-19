@@ -62,7 +62,6 @@ public class PermitMe extends JavaPlugin {
 		Config.load( this );
 		
 		registerListeners();
-		//loadEconomy();
 		loadPermissions();
 		
 		PermitMeEnableCompleteEvent event = new PermitMeEnableCompleteEvent();
@@ -193,10 +192,6 @@ public class PermitMe extends JavaPlugin {
 		if ( locationInstances.size() == 0 ) return true;
 
 		if ( requiredPermits.isEmpty()) {
-			// DEBUG:
-			log.info("No permits exist to restrict " + player.getDisplayName() + " from " + action.asHumanString() + 
-					" " + id + ":" + data + " in " + location.getWorld().getName() + " at x" + 
-					location.getBlockX() + " y" + location.getBlockY() + " z" + location.getBlockZ());
 			return true;
 		}
 		else {

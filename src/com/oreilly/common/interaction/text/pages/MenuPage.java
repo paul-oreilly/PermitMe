@@ -29,7 +29,7 @@ abstract public class MenuPage extends InteractionPage implements HighlightClien
 	@Override
 	public HashMap< String, Iterator< String >> getHighlightList() {
 		HashMap< String, Iterator< String >> result = new HashMap< String, Iterator< String >>();
-		result.put( InteractionPage.STYLE_PLAYER_CHOICES, choices.keySet().iterator() );
+		result.put( Highlighter.PLAYER_CHOICES, choices.keySet().iterator() );
 		return result;
 	}
 	

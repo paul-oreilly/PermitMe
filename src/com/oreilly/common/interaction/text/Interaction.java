@@ -211,6 +211,8 @@ public class Interaction {
 		int i = pageList.length - 1;
 		while ( i >= 0 ) {
 			pages.add( 0, pageList[i] );
+			// add any style overwrites
+			pageList[i].withStyles( style );
 			i--;
 		}
 		return this;
@@ -282,8 +284,7 @@ public class Interaction {
 	
 	
 	public Interaction withPages( InteractionPage... pageList ) {
-		for ( InteractionPage page : pageList )
-			pages.add( page );
+		addPages( pageList );
 		return this;
 	}
 	
@@ -296,6 +297,12 @@ public class Interaction {
 	
 	public Interaction withStyle( String key, Object style ) {
 		this.style.put( key, style );
+		return this;
+	}
+	
+	
+	public Interaction withStyles( HashMap< String, Object > source ) {
+		style.putAll( source );
 		return this;
 	}
 	

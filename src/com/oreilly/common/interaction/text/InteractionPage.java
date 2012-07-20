@@ -8,9 +8,6 @@ import com.oreilly.common.interaction.text.validator.Validator;
 
 abstract public class InteractionPage {
 	
-	static public final String STYLE_TEXT_COLOR = "textColor";
-	static public final String STYLE_PLAYER_CHOICES = "playerChoices";
-	
 	public Formatter formatter = null;
 	public Validator validator = null;
 	public String validationFailedMessage = null;
@@ -70,6 +67,12 @@ abstract public class InteractionPage {
 	
 	public InteractionPage withStyle( String key, Object style ) {
 		this.style.put( key, style );
+		return this;
+	}
+	
+	
+	public InteractionPage withStyles( HashMap< String, Object > source ) {
+		style.putAll( source );
 		return this;
 	}
 }

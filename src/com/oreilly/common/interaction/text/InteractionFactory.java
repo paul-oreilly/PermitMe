@@ -34,16 +34,16 @@ public class InteractionFactory {
 				sender.sendMessage( nonPlayerExclusionMessage );
 				return null;
 			}
-		ArrayList< InteractionPage > newPages = new ArrayList< InteractionPage >();
-		newPages.addAll( pages );
+		ArrayList< InteractionPage > pagesCopy = new ArrayList< InteractionPage >();
+		pagesCopy.addAll( pages );
 		return new Interaction( sender )
 				.withFormatter( formatter )
 				.withValidator( validator )
-				.withPages( pages )
 				.withTimeout( timeout )
 				.withExitStrings( exitStrings )
 				.withReturnStrings( returnStrings )
-				.withPages( newPages );
+				.withPages( pagesCopy )
+				.withStyles( style );
 	}
 	
 	

@@ -12,6 +12,9 @@ import com.oreilly.permitme.PermitMe;
 
 public class Highlighter extends Formatter {
 	
+	static public final String PLAYER_CHOICES = "highlighter_player_choice";
+	static public final String TEXT_COLOR = "highlighter_text_color";
+	
 	public ChatColor defaultHighlight = ChatColor.BLUE;
 	public ChatColor defaultTextColor = ChatColor.WHITE;
 	
@@ -38,7 +41,7 @@ public class Highlighter extends Formatter {
 			HighlightClient client = (HighlightClient)page;
 			HashMap< String, Iterator< String >> data = client.getHighlightList();
 			// get the text color
-			Object rawTextColor = page.style.get( InteractionPage.STYLE_TEXT_COLOR );
+			Object rawTextColor = page.style.get( TEXT_COLOR );
 			String textColor = null;
 			if ( rawTextColor instanceof ChatColor )
 				textColor = ( (ChatColor)rawTextColor ).toString();

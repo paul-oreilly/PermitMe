@@ -1,3 +1,17 @@
+LocationRecords need a list of permits, as well as templates
+ - So a permit can be "Miners Guild" and when a player has it, they can access machines in multiple
+   mining guild buildings - so the permit needs to exist in independent locations. (regardless of isolation)
+
+Permits should store their own alias list
+ - So the above can work! And they can have alias like "mining guild" (from "machines")
+ 
+Permits should have groups
+ - When permits (for an action) resolve to multiple groups, the test should be requiring a permit from all groups
+ (So we can later hook in houses, towns, etc)
+
+
+
+
 /permits/enabled            general use, able to be used anywhere (rec: sym links)
 /permits/avaiable           stash of permits, actual files
 

@@ -1,0 +1,3 @@
+[submodule "BukkitTools"]
+	path = BukkitTools
+	url = github:paul-oreilly/BukkitTools

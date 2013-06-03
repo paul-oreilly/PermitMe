@@ -1,0 +1,57 @@
+
+
+Scrolls of Knowledge:
+
+- Use Map API, so right click opens readable scroll
+- Shows "Cost to learn", and if user selects "Learn now", the cost is taken from their economy
+- Maps use 'data' for storing their ID - combine with enchantment to 'convert' to scroll
+- Use 2nd enchantment to denote a copy (so libraries won't buy them)
+- Have each type of knowledge scroll map to a ID - eg #1 may be "mining"
+
++ Allows future teaching of NPC's
+
+
+
+Library of Knowledge
+
+- Right clicking a bookshelf with a libraian NPC within x blocks
+- Can donate scrolls of knowledge to the library
+- Players can get a copy of a knowledge scoll for x% of it's current worth 
+
++ Towns can have libraries, which serve a purpose. Players can sell spare scrolls to libraries
+.. later, library could have a budget (as part of a town) - fee's go in, and offers to buy new scrolls go out, so players can make money selling unique spares.
+
+
+
+Chests of Knowledge
+
+- Selected chests in the world spawn scrolls of knowledge inside them
+- Each chest has a range of worths (eg 5000-10000) set by admin
+- Chests have timeouts - they may only generate a new scroll (pr player) once a week
+- Each player, on opening, see's a unique inventory - with a single scroll in it.
+- What scroll is generated depends on the worth figure.
+
++ Can design large dungeons, assign worth's to chests based on difficulty, and have game add knowledge randomly, pr player
+  .. hard to farm, all players get rewards, can be balanced with surroundings..
+
+--> Repalce - have bookshelfs (same sort of settings), and a chance (pr player, pr bookshelf 'group') for scrolls to drop on right click (serach)
+  .. only works once pr self (until regen time is over)
+  .. chance massively decreases for each scroll found
+  .. worth is based as above
+  .. each players chance is seperate
+  
+  
+
+Dungeon generator
+
+- Procedural dungeons ('start here, you can go x radius, x depth, make it y hard)
+- Include chests of knowledge at end
+- can build off work of http://dev.bukkit.org/server-mods/catacombs/  - which is GPL'd
+
++ Later, add automatic mode - generate a dungon every x chunks (where there's room for it), and increase base value by y (distance from spawn * y)
+.. so later on, can set a worldborder, generate the map, and have dungeons and all included within it.
+.. much later, can replace strongholds and dungeons of vanilla when doing a custom land generator.
+
+
+
+
